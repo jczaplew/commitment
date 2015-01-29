@@ -59,12 +59,31 @@ class HumansHandler(tornado.web.RequestHandler):
         self.set_header('Content-Type', 'text/plain')
         self.write(humans_content)
 
+class DirectHandler(tornado.web.RequestHandler):
+    def get(self, message_hash=None):
+        if not message_hash:
+            message_hash = random.choice(messages.keys())
+        elif message_hash not in messages:
+            raise tornado.web.HTTPError(404)
+
+        message = messages[message_hash].replace(
+            'XNAMEX', random.choice(names))
+
+        message = message.replace('XUPPERNAMEX', random.choice(names).upper())
+        message = message.replace('XLOWERNAMEX', random.choice(names).lower())
+
+        self.output_message(message, message_hash)
+
+    def output_message(self, message, message_hash):
+        self.write(message)
+
 settings = {
     'static_path': os.path.join(os.path.dirname(__file__), 'static'),
 }
 
 application = tornado.web.Application([
     (r'/', MainHandler),
+    (r'/direct', DirectHandler),
     (r'/([a-z0-9]+)', MainHandler),
     (r'/index.txt', PlainTextHandler),
     (r'/([a-z0-9]+)/index.txt', PlainTextHandler),
